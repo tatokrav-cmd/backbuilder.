@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<title>BACK BUILDER</title>
+<style>
+:root{
+  --bg:#000; --fg:#fff; --mut:#8c8c8c; --dim:#4a4a4a; --line:#242424; --card:#0c0c0c;
+  --top:max(var(--safe-area-inset-top,0px),env(safe-area-inset-top,0px));
+  --bot:max(var(--safe-area-inset-bottom,0px),env(safe-area-inset-bottom,0px));
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--fg);
+  font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  -webkit-user-select:none;user-select:none;overflow:hidden}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+h1,h2,h3,p{margin:0}
+.hidden{display:none!important}
+
+#app{height:100vh;height:100dvh;display:flex;flex-direction:column;padding-top:calc(var(--top) + 10px)}
+.views{flex:1;min-height:0;position:relative}
+.view{position:absolute;inset:0;overflow-y:auto;padding:12px 22px 24px;display:none}
+.view.on{display:block}
+.label{font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--mut);font-weight:600}
+.title{font-size:26px;font-weight:800;letter-spacing:.14em}
+.sub{color:var(--mut);font-size:14px;line-height:1.5}
+
+/* tab bar */
+.tabs{display:flex;border-top:1px solid var(--line);background:#000;padding:8px 6px calc(var(--bot) + 8px)}
+.tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;color:var(--dim);
+  font-size:10px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;padding:6px 0}
+.tab svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.tab.on{color:#fff}
+
+/* buttons */
+.btn{display:flex;align-items:center;justify-content:center;gap:10px;height:58px;border-radius:999px;
+  font-weight:800;letter-spacing:.16em;font-size:14px;text-transform:uppercase;width:100%}
+.btn.pri{background:#fff;color:#000}
+.btn.pri:active{background:#d8d8d8}
+.btn.sec{border:1px solid #3a3a3a;color:#fff}
+.btn.sec:active{background:#141414}
+.btn.sm{height:44px;font-size:12px;width:auto;padding:0 20px}
+.link{color:var(--mut);font-size:13px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;padding:10px 0}
+
+/* cards */
+.card{border:1px solid var(--line);border-radius:20px;background:var(--card);padding:18px}
+.stack>*+*{margin-top:14px}
+.row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+
+/* home */
+.hero{padding:8px 0 4px}
+.today-name{font-size:30px;font-weight:800;line-height:1.1;margin:8px 0 6px}
+.meta{display:flex;gap:16px;color:var(--mut);font-size:13px;margin-top:10px}
+.week{display:flex;justify-content:space-between;gap:6px;margin-top:14px}
+.wd{flex:1;display:flex;flex-direction:column;align-items:center;gap:8px;font-size:11px;color:var(--mut);letter-spacing:.1em}
+.wd i{width:34px;height:34px;border-radius:50%;border:1px solid #333;display:flex;align-items:center;justify-content:center;
+  font-style:normal;font-weight:800;font-size:12px;color:var(--mut)}
+.wd.plan i{border-color:#777;color:#fff}
+.wd.done i{background:#fff;border-color:#fff;color:#000}
+.wd.today span{color:#fff;font-weight:800}
+.wlist .item{display:flex;align-items:center;gap:14px;padding:14px 0;border-top:1px solid var(--line);width:100%;text-align:left}
+.wlist .item:first-child{border-top:0}
+.badge{width:40px;height:40px;border-radius:12px;border:1px solid #333;display:flex;align-items:center;justify-content:center;font-weight:800}
+.item .t{font-weight:700;font-size:15px}
+.item .s{color:var(--mut);font-size:12px;margin-top:3px}
+.chev{margin-left:auto;color:var(--dim);font-size:20px}
+
+/* figure */
+.fig{width:100%;display:block}
+.figbox{border:1px solid var(--line);border-radius:20px;background:#050505;overflow:hidden}
+
+/* exercise list */
+.ex{display:flex;align-items:center;gap:14px;padding:10px 0;border-top:1px solid var(--line);width:100%;text-align:left}
+.ex:first-child{border-top:0}
+.ex .th{width:92px;flex:none;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:#050505}
+
+/* calendar */
+.cal-head{display:flex;align-items:center;justify-content:space-between;margin:6px 0 16px}
+.cal-head b{font-size:18px;letter-spacing:.08em;text-transform:uppercase}
+.nav{width:44px;height:44px;border-radius:50%;border:1px solid #2c2c2c;font-size:18px}
+.grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;text-align:center}
+.grid .h{font-size:11px;color:var(--mut);letter-spacing:.1em;padding-bottom:6px}
+.day{aspect-ratio:1;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  font-size:14px;font-weight:600;position:relative;border:1px solid transparent}
+.day.dim{color:var(--dim)}
+.day.plan:after{content:"";position:absolute;bottom:5px;width:4px;height:4px;border-radius:50%;background:#777}
+.day.done{background:#fff;color:#000;font-weight:800}
+.day.done:after{display:none}
+.day.today{border-color:#fff}
+.day.sel{box-shadow:0 0 0 2px #000,0 0 0 3px #888}
+.legend{display:flex;gap:18px;color:var(--mut);font-size:12px;margin:16px 0 4px;flex-wrap:wrap}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:-1px}
+
+/* history */
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.stat{border:1px solid var(--line);border-radius:16px;padding:14px 8px;text-align:center}
+.stat b{display:block;font-size:26px;font-weight:800}
+.stat span{font-size:10px;letter-spacing:.14em;color:var(--mut);text-transform:uppercase}
+.sess{display:flex;align-items:center;gap:14px;padding:14px 0;border-top:1px solid var(--line)}
+.sess .when{width:54px;flex:none;text-align:center}
+.sess .when b{display:block;font-size:22px;font-weight:800;line-height:1}
+.sess .when span{font-size:10px;letter-spacing:.14em;color:var(--mut);text-transform:uppercase}
+.sess .x{margin-left:auto;color:var(--dim);font-size:22px;width:40px;height:40px}
+
+/* workout screen */
+.screen{position:fixed;inset:0;background:#000;z-index:50;display:flex;flex-direction:column;
+  padding:calc(var(--top) + 10px) 20px calc(var(--bot) + 16px)}
+.w-top{display:flex;align-items:center;gap:12px}
+.w-top .info{flex:1;text-align:center}
+.iconbtn{width:44px;height:44px;border-radius:50%;border:1px solid #2c2c2c;display:flex;align-items:center;justify-content:center;font-size:18px}
+.bar{height:4px;background:#1c1c1c;border-radius:4px;overflow:hidden;margin:14px 0 4px}
+.bar i{display:block;height:100%;width:0;background:#fff;border-radius:4px;transition:width .3s linear}
+.w-main{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:center;gap:12px;overflow:hidden}
+.phase{text-align:center;font-size:12px;letter-spacing:.3em;text-transform:uppercase;color:var(--mut);font-weight:700}
+.w-name{text-align:center;font-size:26px;font-weight:800;line-height:1.15}
+.ring{position:relative;width:min(200px,24dvh);aspect-ratio:1;margin:0 auto}
+.ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.ring circle{fill:none;stroke-width:6}
+.ring .bg{stroke:#1d1d1d}
+.ring .fg{stroke:#fff;stroke-linecap:round}
+.ring.rest .fg{stroke:#8c8c8c}
+.ring b{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:min(64px,8.5dvh);font-weight:800;font-variant-numeric:tabular-nums}
+.ctrl{display:grid;grid-template-columns:1fr 1.5fr 1fr;gap:10px;margin-top:8px}
+.ctrl .btn{height:54px;font-size:12px;letter-spacing:.05em}
+.next-box{text-align:center}
+.next-box .nn{font-size:20px;font-weight:800;margin-top:4px}
+.tip{color:var(--mut);font-size:13px;line-height:1.5;text-align:center;padding:0 6px}
+.w-main>*{flex-shrink:0}
+.w-main .figbox{max-height:28dvh}
+.w-main .figbox svg{max-height:28dvh}
+@media (max-height:660px){.tip{display:none}.w-main{gap:8px}.w-name{font-size:22px}}
+
+/* sheet & modal */
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:80;display:flex;align-items:flex-end}
+.sheet{width:100%;max-height:92dvh;overflow-y:auto;background:#0a0a0a;border:1px solid #262626;border-radius:26px 26px 0 0;
+  padding:12px 22px calc(var(--bot) + 22px)}
+.grab{width:40px;height:4px;border-radius:4px;background:#333;margin:0 auto 16px}
+.steps{margin:14px 0 0;padding:0;list-style:none;counter-reset:s}
+.steps li{counter-increment:s;display:flex;gap:14px;padding:10px 0;font-size:15px;line-height:1.5;color:#e8e8e8}
+.steps li:before{content:counter(s);flex:none;width:26px;height:26px;border-radius:50%;border:1px solid #444;
+  font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;margin-top:1px}
+.note{border-left:2px solid #fff;padding:4px 0 4px 14px;color:#cfcfcf;font-size:14px;line-height:1.5;margin-top:10px}
+.modal{width:calc(100% - 40px);max-width:420px;margin:auto;background:#0a0a0a;border:1px solid #2a2a2a;border-radius:24px;padding:24px}
+.scrim.center{align-items:center}
+.modal h3{font-size:19px;font-weight:800;margin-bottom:8px}
+.modal p{color:#bbb;font-size:14px;line-height:1.55}
+.modal .acts{display:flex;flex-direction:column;gap:10px;margin-top:20px}
+.seg{display:flex;gap:8px;margin-top:10px}
+.seg button{flex:1;height:42px;border:1px solid #333;border-radius:999px;font-weight:700;font-size:13px;color:var(--mut)}
+.seg button.on{background:#fff;color:#000;border-color:#fff}
+.tg{display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-top:1px solid var(--line)}
+.sw{width:50px;height:30px;border-radius:30px;border:1px solid #444;position:relative}
+.sw:after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#666;transition:.2s}
+.sw.on{background:#fff;border-color:#fff}.sw.on:after{left:23px;background:#000}
+
+.done-big{font-size:34px;font-weight:800;line-height:1.1;text-align:center}
+.ok{width:92px;height:92px;border-radius:50%;border:2px solid #fff;display:flex;align-items:center;justify-content:center;margin:0 auto}
+.ok svg{width:44px;height:44px;stroke:#fff;fill:none;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.empty{color:var(--mut);text-align:center;padding:36px 10px;font-size:14px;line-height:1.6}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="views">
+    <section id="v-home" class="view on"></section>
+    <section id="v-ex" class="view"></section>
+    <section id="v-cal" class="view"></section>
+    <section id="v-hist" class="view"></section>
+  </div>
+  <nav class="tabs">
+    <button class="tab on" data-tab="home">
+      <svg viewBox="0 0 24 24"><path d="M5 4v16M19 4v16M5 12h14M2 8v8M22 8v8"/></svg>Allenati
+    </button>
+    <button class="tab" data-tab="ex">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="2.2"/><path d="M12 8v6M7 11l5-1 5 1M9 21l3-7 3 7"/></svg>Esercizi
+    </button>
+    <button class="tab" data-tab="cal">
+      <svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="3"/><path d="M4 10h16M9 3v4M15 3v4"/></svg>Calendario
+    </button>
+    <button class="tab" data-tab="hist">
+      <svg viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 2.4-5.7M4 4v4h4M12 8v4l3 2"/></svg>Storico
+    </button>
+  </nav>
+</div>
+
+<div id="workout" class="screen hidden"></div>
+<div id="layer"></div>
+
+<script>
+/* =========================================================
+   BACK BUILDER - dati degli esercizi e motore di animazione
+   ========================================================= */
+const D = {L:84, N:26, HR:12, UA:32, FA:30, TH:48, SN:44, FT:15};
+const FLOOR = 232;
+
+/* Ogni esercizio: modalita' di arti (arms: fk/ik, legs: fk/k/ik), posa base e sequenza.
+   Angoli in gradi: 0=destra, 90=giu, 180=sinistra, -90=su. */
+const EX = {
+  gattomucca:{
+    name:'Gatto-Mucca', target:'Mobilità della colonna', arms:'ik', legs:'k', ed:1, kd:-1, foot:{rel:0},
+    cue:'Respira piano: espira arrotondando, inspira abbassando.',
+    steps:['Mettiti a quattro zampe: mani sotto le spalle, ginocchia sotto i fianchi.',
+      'Espira e arrotonda la schiena verso il soffitto, mento verso il petto (gatto).',
+      'Inspira, abbassa la pancia, alza il petto e guarda avanti (mucca).',
+      'Ripeti lentamente: circa 4 secondi per ogni movimento.'],
+    note:'Muoviti con dolcezza, senza forzare. Fermati se senti dolore.',
+    base:{hip:[150,181],t:-9.6,sp:0,ha:-5,W1:[233,229],W2:[233,229],u1:0,f1:0,u2:0,f2:0,
+          K1:[150,229],K2:[150,229],s1:180,s2:180,h1:90,h2:90},
+    seq:[[{sp:16,ha:80},2.6,0.3],[{sp:-13,ha:-38},2.6,0.3]]
+  },
+  ginocchia:{
+    name:'Ginocchia al petto', target:'Rilassa la zona lombare', arms:'ik', legs:'ik', ed:1, kd:-1, foot:{rel:-90},
+    cue:'Alterna le gambe, schiena rilassata a terra.',
+    steps:['Sdraiati sulla schiena con le ginocchia piegate e i piedi a terra.',
+      'Porta un ginocchio verso il petto aiutandoti con le mani.',
+      'Resta un attimo, poi riporta il piede a terra.',
+      'Alterna le gambe con calma, respirando in modo regolare.'],
+    note:'Tieni la testa appoggiata a terra e le spalle rilassate.',
+    base:{hip:[252,228],t:180,sp:0,ha:195,W1:[230,228],W2:[230,228],u1:0,f1:0,u2:0,f2:0,
+          A1:[292,229],A2:[292,229],h1:0,h2:0,s1:0,s2:0},
+    seq:[[{A1:[262,196],W1:[224,197],W2:[224,197]},1.4,1.4],[{},1.2,0.3],
+         [{A2:[262,196],W1:[224,197],W2:[224,197]},1.4,1.4],[{},1.2,0.3]]
+  },
+  ponte:{
+    name:'Ponte glutei', target:'Glutei e muscoli lombari', arms:'ik', legs:'ik', ed:1, kd:-1, foot:{abs:0},
+    cue:'Spingi sui talloni, stringi i glutei in alto.',
+    steps:['Sdraiati sulla schiena, ginocchia piegate, piedi a terra, braccia lungo il corpo.',
+      'Spingi sui talloni e solleva il bacino: linea retta da spalle a ginocchia.',
+      'Stringi i glutei per un secondo, senza inarcare la schiena.',
+      'Scendi lentamente, una vertebra alla volta.'],
+    note:'Le costole restano "chiuse": non inarcare la zona lombare.',
+    base:{hip:[254,228],t:180,sp:0,ha:195,W1:[232,228],W2:[232,228],u1:0,f1:0,u2:0,f2:0,
+          A1:[292,229],A2:[292,229],h1:0,h2:0,s1:0,s2:0},
+    seq:[[{hip:[247,193],t:155.6,sp:-5},1.4,1.5],[{},1.6,0.4]]
+  },
+  birddog:{
+    name:'Bird-dog', target:'Equilibrio e stabilità della schiena', arms:'ik', legs:'fk', ed:1, kd:-1, foot:{rel:0},
+    cue:'Schiena ferma, bacino immobile. Poi cambia lato.',
+    steps:['Parti a quattro zampe con la schiena dritta.',
+      'Stendi un braccio in avanti e la gamba opposta indietro, tutto in linea.',
+      'Resta fermo 1-2 secondi senza ruotare il bacino.',
+      'Torna al centro e cambia lato, lento e controllato.'],
+    note:'Immagina un bicchiere d\'acqua sulla schiena: non deve cadere.',
+    base:{hip:[150,181],t:-9.6,sp:0,ha:-8,W1:[233,229],W2:[233,229],u1:0,f1:0,u2:0,f2:0,
+          h1:90,s1:180,h2:90,s2:180,K1:[150,229],K2:[150,229]},
+    seq:[[{W1:[294,160],h2:177,s2:180},1.6,1.4],[{},1.4,0.3],[{W2:[294,160],h1:177,s1:180},1.6,1.4],[{},1.4,0.3]]
+  },
+  deadbug:{
+    name:'Insetto morto', target:'Addome e stabilità lombare', arms:'fk', legs:'fk', ed:1, kd:-1, foot:{rel:-90},
+    cue:'Schiena bassa premuta a terra, movimenti lenti.',
+    steps:['Sdraiati sulla schiena: braccia verso il soffitto, ginocchia piegate a 90°.',
+      'Tieni la parte bassa della schiena premuta a terra.',
+      'Porta un braccio dietro la testa e stendi la gamba opposta, vicino al pavimento.',
+      'Torna al centro e cambia lato, lentamente.'],
+    note:'Se la schiena si stacca da terra, riduci il movimento.',
+    base:{hip:[252,228],t:180,sp:0,ha:195,u1:-90,f1:-90,u2:-90,f2:-90,h1:-90,s1:0,h2:-90,s2:0},
+    seq:[[{u1:-168,f1:-168,h2:-12,s2:-12},1.5,0.5],[{},1.5,0.2],[{u2:-168,f2:-168,h1:-12,s1:-12},1.5,0.5],[{},1.5,0.2]]
+  },
+  superman:{
+    name:'Superman', target:'Muscoli estensori della schiena', arms:'fk', legs:'fk', ed:1, kd:-1, foot:{rel:0},
+    cue:'Solleva poco, tieni 2 secondi, collo neutro.',
+    steps:['Sdraiati a pancia in giù, braccia in avanti e gambe distese.',
+      'Solleva leggermente braccia, petto e gambe, guardando il pavimento.',
+      'Mantieni 2 secondi senza forzare il collo.',
+      'Scendi piano e ripeti.'],
+    note:'Bastano pochi centimetri. Non inarcare troppo il collo.',
+    base:{hip:[150,228],t:0,sp:0,ha:-17,u1:0,f1:0,u2:0,f2:0,h1:180,s1:180,h2:180,s2:180},
+    seq:[[{t:-12,sp:-6,ha:-30,u1:-15,f1:-15,u2:-15,f2:-15,h1:192,s1:192,h2:192,s2:192},1.5,2.0],[{},1.5,0.5]]
+  },
+  nuotatore:{
+    name:'Nuotatore', target:'Schiena e glutei, in alternanza', arms:'fk', legs:'fk', ed:1, kd:-1, foot:{rel:0},
+    cue:'Braccio e gamba opposti, piccoli movimenti lenti.',
+    steps:['Sdraiati a pancia in giù con braccia in avanti e gambe distese.',
+      'Solleva un braccio e la gamba opposta di pochi centimetri.',
+      'Abbassali e alterna con l\'altro braccio e l\'altra gamba.',
+      'Collo allungato e sguardo a terra, movimenti lenti.'],
+    note:'Niente slanci: movimenti piccoli e controllati.',
+    base:{hip:[150,228],t:-4,sp:-2,ha:-20,u1:0,f1:0,u2:0,f2:0,h1:180,s1:180,h2:180,s2:180},
+    seq:[[{u1:-18,f1:-18,h2:192,s2:192},1.2,0.2],[{},1.2,0.1],[{u2:-18,f2:-18,h1:192,s1:192},1.2,0.2],[{},1.2,0.1]]
+  },
+  sfinge:{
+    name:'Sfinge', target:'Estensione dolce della schiena', arms:'fk', legs:'fk', ed:1, kd:-1, foot:{rel:0},
+    cue:'Sali piano, spalle lontane dalle orecchie.',
+    steps:['Sdraiati a pancia in giù con gli avambracci a terra, gomiti sotto le spalle.',
+      'Spingi sugli avambracci e solleva piano il petto.',
+      'Spalle lontane dalle orecchie, sguardo in avanti.',
+      'Resta 2-3 secondi respirando, poi scendi lentamente.'],
+    note:'Deve essere comodo: se senti dolore nella zona lombare, sali di meno.',
+    base:{hip:[150,228],t:0,sp:0,ha:-17,u1:-120,f1:55,u2:-120,f2:55,h1:180,s1:180,h2:180,s2:180},
+    seq:[[{t:-22,sp:-8,ha:-28,u1:90,f1:0,u2:90,f2:0},2.0,2.0],[{},2.0,0.5]]
+  },
+  goodmorning:{
+    name:'Good morning', target:'Cerniera dell\'anca e lombari', arms:'fk', legs:'ik', ed:1, kd:-1, foot:{abs:0},
+    cue:'Sedere indietro, schiena dritta, poi spingi in piedi.',
+    steps:['In piedi, piedi larghi come le spalle, ginocchia leggermente piegate, mani sul petto.',
+      'Porta il sedere indietro e inclina il busto in avanti, con la schiena dritta.',
+      'Scendi finché senti il retro delle cosce, non oltre.',
+      'Spingi i piedi a terra e torna in piedi stringendo i glutei.'],
+    note:'Schiena sempre dritta e sguardo avanti: il movimento nasce dall\'anca.',
+    base:{hip:[200,137],t:-90,sp:0,ha:-90,u1:60,f1:-110,u2:60,f2:-110,A1:[200,229],A2:[200,229],h1:90,s1:90,h2:90,s2:90},
+    seq:[[{hip:[180,142],t:-30,ha:-40,u1:120,f1:-50,u2:120,f2:-50},2.0,0.8],[{},2.0,0.4]]
+  },
+  plancia:{
+    name:'Plancia', target:'Core e stabilità', arms:'fk', legs:'fk', ed:1, kd:-1, foot:{abs:90},
+    cue:'Linea retta, addome stretto, respira.',
+    steps:['Appoggiati sugli avambracci e sulle punte dei piedi, gomiti sotto le spalle.',
+      'Forma una linea retta da testa a talloni.',
+      'Stringi addome e glutei e respira normalmente.',
+      'Se è troppo difficile, appoggia le ginocchia a terra.'],
+    note:'Non lasciare cadere il bacino e non alzare il sedere.',
+    base:{hip:[191.4,205],t:-5.5,sp:0,ha:-14,u1:90,f1:0,u2:90,f2:0,h1:174.5,s1:174.5,h2:174.5,s2:174.5},
+    seq:[[{hip:[191.4,207],t:-6.8,h1:175.6,s1:175.6,h2:175.6,s2:175.6},1.6,0.2],[{},1.6,0.2]]
+  },
+  bambino:{
+    name:'Posizione del bambino', target:'Allungamento e relax', arms:'fk', legs:'k', ed:1, kd:-1, foot:{rel:0},
+    cue:'Rilassati e respira lentamente.',
+    steps:['Parti a quattro zampe e porta i fianchi verso i talloni.',
+      'Allunga le braccia in avanti e appoggia la fronte a terra.',
+      'Respira lentamente con la pancia, rilassa schiena e spalle.',
+      'Resta così per tutto il tempo.'],
+    note:'Se le ginocchia danno fastidio, metti un cuscino tra cosce e polpacci.',
+    base:{hip:[150,181],t:-9.6,sp:0,ha:-8,u1:90,f1:90,u2:90,f2:90,K1:[150,229],K2:[150,229],s1:180,s2:180,h1:90,h2:90},
+    seq:[[{hip:[112,202],t:-5,sp:6,ha:60,u1:33,f1:33,u2:33,f2:33},2.4,2.6],[{},2.2,0.4]]
+  }
+};
+
+/* ---- costruzione delle pose ---- */
+for (const id in EX) {
+  const e = EX[id]; e.id = id;
+  e.keys = e.seq.map(([over, mv, hold]) => ({pose: Object.assign({}, e.base, over), mv, hold}));
+  e.total = e.keys.reduce((s, k) => s + k.mv + k.hold, 0);
+}
+const lerp = (a, b, u) => a + (b - a) * u;
+const ease = u => 0.5 - 0.5 * Math.cos(Math.PI * u);
+function lerpPose(a, b, u) {
+  const o = {};
+  for (const k in a) o[k] = Array.isArray(a[k]) ? [lerp(a[k][0], b[k][0], u), lerp(a[k][1], b[k][1], u)] : lerp(a[k], b[k], u);
+  return o;
+}
+function poseAt(e, t) {
+  t = ((t % e.total) + e.total) % e.total;
+  const n = e.keys.length;
+  for (let i = 0; i < n; i++) {
+    const k = e.keys[i];
+    if (t < k.mv) return lerpPose(e.keys[(i + n - 1) % n].pose, k.pose, ease(t / k.mv));
+    t -= k.mv;
+    if (t < k.hold) return k.pose;
+    t -= k.hold;
+  }
+  return e.keys[n - 1].pose;
+}
+
+/* ---- cinematica ---- */
+const rad = a => a * Math.PI / 180;
+const vec = (a, l) => [Math.cos(rad(a)) * l, Math.sin(rad(a)) * l];
+const add = (p, v) => [p[0] + v[0], p[1] + v[1]];
+function ik(P, T, a, b, dir) {
+  const dx = T[0] - P[0], dy = T[1] - P[1], d = Math.hypot(dx, dy) || 1e-6;
+  const dd = Math.min(Math.max(d, Math.abs(a - b) + 0.01), a + b - 0.01);
+  const ux = dx / d, uy = dy / d;
+  const x = (a * a - b * b + dd * dd) / (2 * dd), h = Math.sqrt(Math.max(a * a - x * x, 0));
+  return [[P[0] + ux * x - uy * h * dir, P[1] + uy * x + ux * h * dir], [P[0] + ux * dd, P[1] + uy * dd]];
+}
+function solve(e, p) {
+  const H = p.hip, S = add(H, vec(p.t, D.L));
+  const n = [Math.sin(rad(p.t)), -Math.cos(rad(p.t))];
+  const C = [(H[0] + S[0]) / 2 + n[0] * p.sp * 2, (H[1] + S[1]) / 2 + n[1] * p.sp * 2];
+  const head = add(S, vec(p.ha, D.N));
+  const arms = [1, 2].map(i => {
+    if (e.arms === 'ik') { const [E, W] = ik(S, p['W' + i], D.UA, D.FA, e.ed); return [S, E, W]; }
+    const E = add(S, vec(p['u' + i], D.UA)); return [S, E, add(E, vec(p['f' + i], D.FA))];
+  });
+  const legs = [1, 2].map(i => {
+    let K, A;
+    if (e.legs === 'ik') { [K, A] = ik(H, p['A' + i], D.TH, D.SN, e.kd); }
+    else if (e.legs === 'k') { K = p['K' + i]; A = add(K, vec(p['s' + i], D.SN)); }
+    else { K = add(H, vec(p['h' + i], D.TH)); A = add(K, vec(p['s' + i], D.SN)); }
+    const shin = Math.atan2(A[1] - K[1], A[0] - K[0]) * 180 / Math.PI;
+    const fa = e.foot.abs !== undefined ? e.foot.abs : shin + e.foot.rel;
+    return [H, K, A, add(A, vec(fa, D.FT))];
+  });
+  return {S, C, H, head, arms, legs};
+}
+
+/* ---- disegno ---- */
+/* inquadratura automatica: calcola l'area occupata da tutto il movimento */
+const ASPECT = 1.85;
+function viewBoxFor(e) {
+  if (e.vb) return e.vb;
+  let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
+  const grab = (p, r = 0) => { x0 = Math.min(x0, p[0] - r); x1 = Math.max(x1, p[0] + r); y0 = Math.min(y0, p[1] - r); y1 = Math.max(y1, p[1] + r); };
+  for (let t = 0; t < e.total; t += 0.1) {
+    const r = solve(e, poseAt(e, t));
+    r.arms.forEach(a => a.forEach(p => grab(p))); r.legs.forEach(l => l.forEach(p => grab(p)));
+    grab(r.head, D.HR + 3); grab(r.C); grab(r.S); grab(r.H);
+  }
+  y1 = Math.max(y1, FLOOR + 6);
+  const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
+  const asp = Math.min(ASPECT, Math.max(1.4, (x1 - x0 + 56) / (y1 - y0 + 34)));
+  let w = Math.max(x1 - x0 + 56, (y1 - y0 + 34) * asp), h = w / asp;
+  // base appoggiata in basso: il pavimento resta sempre vicino al bordo inferiore
+  let top = FLOOR + 14 - h; if (top > y0 - 16) top = y0 - 16;
+  e.vb = [cx - w / 2, top, w, h];
+  return e.vb;
+}
+const pts = a => a.map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ');
+const NS = 'http://www.w3.org/2000/svg';
+const figs = new Set();
+class Fig {
+  constructor(box, id, opts = {}) {
+    this.e = EX[id]; this.t = opts.t0 || 0; this.running = true; this.box = box;
+    const vb = viewBoxFor(this.e);
+    box.innerHTML =
+      `<svg class="fig" viewBox="${vb.map(n => n.toFixed(1)).join(' ')}" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="${(vb[0] + 8).toFixed(1)}" x2="${(vb[0] + vb[2] - 8).toFixed(1)}" y1="${FLOOR}" y2="${FLOOR}" stroke="#262626" stroke-width="2"/>
+        <polyline class="l2" stroke="#4d4d4d" stroke-width="6"/><polyline class="a2" stroke="#4d4d4d" stroke-width="6"/>
+        <path class="gl" stroke="#fff" stroke-opacity=".13" stroke-width="24"/>
+        <path class="sp" stroke="#fff" stroke-width="9"/>
+        <polyline class="l1" stroke="#fff" stroke-width="7"/><polyline class="a1" stroke="#fff" stroke-width="6"/>
+        <circle class="hd" r="${D.HR}" fill="#000" stroke="#fff" stroke-width="5"/>
+      </svg>`;
+    const q = s => box.querySelector(s);
+    this.el = {l1: q('.l1'), l2: q('.l2'), a1: q('.a1'), a2: q('.a2'), sp: q('.sp'), gl: q('.gl'), hd: q('.hd')};
+    this.draw();
+    figs.add(this);
+  }
+  draw() {
+    const r = solve(this.e, poseAt(this.e, this.t)), el = this.el;
+    el.l1.setAttribute('points', pts(r.legs[0])); el.l2.setAttribute('points', pts(r.legs[1]));
+    el.a1.setAttribute('points', pts(r.arms[0])); el.a2.setAttribute('points', pts(r.arms[1]));
+    const d = `M${r.H[0].toFixed(1)},${r.H[1].toFixed(1)} Q${r.C[0].toFixed(1)},${r.C[1].toFixed(1)} ${r.S[0].toFixed(1)},${r.S[1].toFixed(1)}`;
+    el.sp.setAttribute('d', d); el.gl.setAttribute('d', d);
+    el.hd.setAttribute('cx', r.head[0].toFixed(1)); el.hd.setAttribute('cy', r.head[1].toFixed(1));
+  }
+  tick(dt) { if (this.running) { this.t += dt; this.draw(); } }
+  destroy() { figs.delete(this); }
+}
+
+/* =========================================================
+   Piano di allenamento, memoria e utilita'
+   ========================================================= */
+const WORK = 35, REST = 20, PREP = 10;
+const PLAN = {
+  A: {code:'A', name:'Mobilità e base', focus:'Muovi la colonna e risveglia la schiena',
+      list:['gattomucca','ginocchia','ponte','birddog','bambino']},
+  B: {code:'B', name:'Forza della schiena', focus:'Rinforza lombari, glutei e dorsali',
+      list:['ponte','superman','nuotatore','sfinge','bambino']},
+  C: {code:'C', name:'Core e stabilità', focus:'Addome, equilibrio e cerniera d\'anca',
+      list:['deadbug','birddog','plancia','goodmorning','bambino']}
+};
+const WEEK_PLAN = {1:'A', 3:'B', 5:'C'};          // Lunedì, Mercoledì, Venerdì
+const WD = ['L','M','M','G','V','S','D'];
+const WD_FULL = ['Domenica','Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato'];
+const MONTHS = ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
+const MON_SHORT = ['GEN','FEB','MAR','APR','MAG','GIU','LUG','AGO','SET','OTT','NOV','DIC'];
+
+/* costruisce la lista dei passaggi: preparazione, 2 giri, recuperi */
+function buildSteps(code) {
+  const w = PLAN[code], items = [];
+  const rounds = [w.list, w.list.slice(0, -1)];   // 2° giro senza la posizione di relax finale
+  rounds.forEach((r, ri) => r.forEach(id => items.push({ex: id, round: ri + 1, dur: id === 'bambino' ? 45 : WORK})));
+  const steps = [];
+  items.forEach((it, i) => {
+    steps.push({type: i === 0 ? 'prep' : 'rest', dur: i === 0 ? PREP : REST, ex: it.ex, label: i === 0 ? 'Preparati' : 'Recupero'});
+    steps.push({type: 'work', dur: it.dur, ex: it.ex, round: it.round, n: i + 1, of: items.length});
+  });
+  return steps;
+}
+const stepsTotal = steps => steps.reduce((s, x) => s + x.dur, 0);
+const workoutMinutes = code => Math.round(stepsTotal(buildSteps(code)) / 60);
+
+/* ---- date ---- */
+const pad = n => String(n).padStart(2, '0');
+const ymd = d => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+const parseYmd = s => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); };
+const todayStr = () => ymd(new Date());
+const mmss = s => { s = Math.max(0, Math.ceil(s)); return pad(Math.floor(s / 60)) + ':' + pad(s % 60); };
+const mondayOf = d => { const x = new Date(d.getFullYear(), d.getMonth(), d.getDate()); x.setDate(x.getDate() - ((x.getDay() + 6) % 7)); return x; };
+
+/* ---- memoria (con protezione se non disponibile) ---- */
+const mem = {};
+const store = {
+  get(k, def) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : def; } catch (e) { return k in mem ? mem[k] : def; } },
+  set(k, v) { mem[k] = v; try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+};
+let sessionLog = store.get('bb_history', []);
+let settings = Object.assign({sound: true, vibrate: true}, store.get('bb_settings', {}));
+const saveHistory = () => store.set('bb_history', sessionLog);
+const saveSettings = () => store.set('bb_settings', settings);
+const sessionsOn = ds => sessionLog.filter(h => h.date === ds);
+
+/* quale allenamento e' previsto per una data e quale e' il prossimo */
+function plannedFor(d) { return WEEK_PLAN[d.getDay()] || null; }
+function nextWorkout() {
+  const now = new Date();
+  for (let i = 0; i < 8; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + i);
+    const c = plannedFor(d);
+    if (c && !(i === 0 && sessionsOn(ymd(d)).some(h => h.code === c))) return {code: c, date: d, offset: i};
+  }
+  return {code: 'A', date: now, offset: 0};
+}
+
+/* ---- audio e vibrazione ---- */
+let actx = null;
+function unlockAudio() {
+  try { actx = actx || new (window.AudioContext || window.webkitAudioContext)(); if (actx.state === 'suspended') actx.resume(); } catch (e) {}
+}
+function beep(freq = 880, ms = 120) {
+  if (!settings.sound || !actx) return;
+  try {
+    const o = actx.createOscillator(), g = actx.createGain();
+    o.type = 'sine'; o.frequency.value = freq; o.connect(g); g.connect(actx.destination);
+    const t = actx.currentTime; g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.25, t + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t + ms / 1000);
+    o.start(t); o.stop(t + ms / 1000 + 0.02);
+  } catch (e) {}
+}
+function buzz(p) { if (settings.vibrate && navigator.vibrate) { try { navigator.vibrate(p); } catch (e) {} } }
+
+/* ---- scorciatoie DOM ---- */
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const ICON_OK = '<svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+
+/* =========================================================
+   Schermate: Allenati, Esercizi, Calendario, Storico
+   ========================================================= */
+let calMonth = new Date(); calMonth.setDate(1);
+let calSel = todayStr();
+let sheetFig = null;
+
+function thumb(id) {   // miniatura statica, nel punto piu' chiaro del movimento
+  const box = document.createElement('div');
+  const e = EX[id], f = new Fig(box, id, {t0: e.keys[0].mv});
+  f.running = false; figs.delete(f);
+  return box.innerHTML;
+}
+
+/* ---------- ALLENATI ---------- */
+function renderHome() {
+  const now = new Date(), nx = nextWorkout(), w = PLAN[nx.code];
+  const isToday = nx.offset === 0;
+  const hasToday = plannedFor(now);
+  const doneToday = sessionsOn(todayStr()).length > 0;
+  let title, sub;
+  if (isToday) { title = 'Oggi: ' + w.name; sub = w.focus; }
+  else if (hasToday && doneToday) { title = 'Oggi è fatta'; sub = 'Ottimo lavoro. Prossimo: ' + WD_FULL[nx.date.getDay()] + ' – ' + w.name; }
+  else { title = 'Oggi riposi'; sub = 'Il recupero fa crescere la schiena. Prossimo: ' + WD_FULL[nx.date.getDay()] + ' – ' + w.name; }
+
+  const mon = mondayOf(now);
+  let week = '';
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(mon.getFullYear(), mon.getMonth(), mon.getDate() + i), ds = ymd(d);
+    const cls = ['wd'];
+    if (sessionsOn(ds).length) cls.push('done'); else if (plannedFor(d)) cls.push('plan');
+    if (ds === todayStr()) cls.push('today');
+    week += `<div class="${cls.join(' ')}"><i>${sessionsOn(ds).length ? '✓' : (plannedFor(d) || '')}</i><span>${WD[i]}</span></div>`;
+  }
+  const doneWeek = [0,1,2,3,4,5,6].filter(i => sessionsOn(ymd(new Date(mon.getFullYear(), mon.getMonth(), mon.getDate() + i))).length).length;
+
+  const list = Object.values(PLAN).map(p => `
+    <button class="item" data-start="${p.code}">
+      <div class="badge">${p.code}</div>
+      <div><div class="t">${p.name}</div><div class="s">${p.focus} · ~${workoutMinutes(p.code)} min</div></div>
+      <span class="chev">›</span>
+    </button>`).join('');
+
+  $('#v-home').innerHTML = `
+    <div class="stack">
+      <div class="hero">
+        <div class="label">Back Builder</div>
+        <div class="today-name">${title}</div>
+        <p class="sub">${sub}</p>
+        <div class="meta"><span>${workoutMinutes(nx.code)} min</span><span>${buildSteps(nx.code).filter(s => s.type === 'work').length} esercizi</span><span>Principiante</span></div>
+      </div>
+      <button class="btn pri" data-start="${nx.code}">Inizia allenamento</button>
+      <div class="card">
+        <div class="row"><span class="label">Questa settimana</span><span class="sub">${doneWeek}/3</span></div>
+        <div class="week">${week}</div>
+      </div>
+      <div class="card wlist">
+        <div class="label" style="margin-bottom:6px">Scegli un allenamento</div>${list}
+      </div>
+      <div class="row" style="justify-content:center;gap:22px">
+        <button class="link" id="open-settings">Impostazioni</button>
+        <button class="link" id="open-info">Consigli</button>
+      </div>
+    </div>`;
+}
+
+/* ---------- ESERCIZI ---------- */
+function renderEx() {
+  const all = Object.keys(EX).map(id => `
+    <button class="ex" data-ex="${id}">
+      <div class="th">${thumb(id)}</div>
+      <div><div class="t" style="font-weight:700">${EX[id].name}</div><div class="s sub" style="font-size:12px;margin-top:3px">${EX[id].target}</div></div>
+      <span class="chev">›</span>
+    </button>`).join('');
+  $('#v-ex').innerHTML = `<div class="label">Libreria</div><h2 class="title" style="margin:6px 0 4px">ESERCIZI</h2>
+    <p class="sub" style="margin-bottom:12px">Tutti a corpo libero. Tocca per vedere l'animazione e le istruzioni.</p>${all}`;
+}
+function openExercise(id) {
+  const e = EX[id], layer = $('#layer');
+  layer.innerHTML = `<div class="scrim" id="sc"><div class="sheet"><div class="grab"></div>
+    <div class="figbox" id="sf"></div>
+    <div class="label" style="margin-top:18px">${e.target}</div>
+    <h2 style="font-size:24px;font-weight:800;margin:6px 0">${e.name}</h2>
+    <p class="sub">${e.cue}</p>
+    <ol class="steps">${e.steps.map(s => `<li>${s}</li>`).join('')}</ol>
+    <div class="note">${e.note}</div>
+    <button class="btn sec" id="sc-close" style="margin-top:22px">Chiudi</button></div></div>`;
+  sheetFig = new Fig($('#sf'), id);
+  const close = () => { if (sheetFig) sheetFig.destroy(); sheetFig = null; layer.innerHTML = ''; };
+  $('#sc-close').onclick = close;
+  $('#sc').addEventListener('click', ev => { if (ev.target.id === 'sc') close(); });
+}
+
+/* ---------- CALENDARIO ---------- */
+function renderCal() {
+  const y = calMonth.getFullYear(), m = calMonth.getMonth();
+  const first = new Date(y, m, 1), offset = (first.getDay() + 6) % 7, days = new Date(y, m + 1, 0).getDate();
+  let cells = WD.map(w => `<div class="h">${w}</div>`).join('');
+  for (let i = 0; i < offset; i++) cells += '<div></div>';
+  for (let d = 1; d <= days; d++) {
+    const dt = new Date(y, m, d), ds = ymd(dt), c = ['day'];
+    if (sessionsOn(ds).length) c.push('done'); else if (plannedFor(dt)) c.push('plan');
+    if (ds === todayStr()) c.push('today');
+    if (ds === calSel) c.push('sel');
+    cells += `<button class="${c.join(' ')}" data-day="${ds}">${d}</button>`;
+  }
+  const sd = parseYmd(calSel), ss = sessionsOn(calSel), pl = plannedFor(sd);
+  let detail;
+  if (ss.length) detail = ss.map(s => `<div class="item" style="padding:6px 0"><div class="badge">${s.code}</div><div><div class="t">${PLAN[s.code].name}</div><div class="s">${Math.max(1, Math.round(s.secs / 60))} min${s.full ? '' : ' · parziale'}</div></div></div>`).join('');
+  else if (pl) detail = `<p class="sub">Allenamento previsto: <b style="color:#fff">${PLAN[pl].name}</b></p>`;
+  else detail = `<p class="sub">Giorno di recupero. Una camminata leggera di 20 minuti va benissimo.</p>`;
+  $('#v-cal').innerHTML = `<div class="label">Programma</div>
+    <div class="cal-head"><button class="nav" id="cal-prev">‹</button><b>${MONTHS[m]} ${y}</b><button class="nav" id="cal-next">›</button></div>
+    <div class="grid">${cells}</div>
+    <div class="legend"><span><i style="background:#fff"></i>Fatto</span><span><i style="background:#777"></i>Previsto</span><span><i style="border:1px solid #fff"></i>Oggi</span></div>
+    <div class="card" style="margin-top:12px"><div class="label" style="margin-bottom:8px">${WD_FULL[sd.getDay()]} ${sd.getDate()} ${MONTHS[sd.getMonth()]}</div>${detail}</div>`;
+}
+
+/* ---------- STORICO ---------- */
+function renderHist() {
+  const tot = sessionLog.length, mins = tot ? Math.max(1, Math.round(sessionLog.reduce((s, h) => s + h.secs, 0) / 60)) : 0;
+  const mon = mondayOf(new Date()), wk = sessionLog.filter(h => parseYmd(h.date) >= mon).length;
+  const rows = [...sessionLog].sort((a, b) => b.ts - a.ts).map(h => {
+    const d = parseYmd(h.date);
+    return `<div class="sess"><div class="when"><b>${d.getDate()}</b><span>${MON_SHORT[d.getMonth()]}</span></div>
+      <div><div class="t" style="font-weight:700">${PLAN[h.code].name}</div><div class="s sub" style="font-size:12px;margin-top:3px">${WD_FULL[d.getDay()]} · ${Math.max(1, Math.round(h.secs / 60))} min${h.full ? '' : ' · parziale'}</div></div>
+      <button class="x" data-del="${h.ts}" aria-label="Elimina">×</button></div>`;
+  }).join('');
+  $('#v-hist').innerHTML = `<div class="label">Cronologia</div><h2 class="title" style="margin:6px 0 16px">STORICO</h2>
+    <div class="stats"><div class="stat"><b>${tot}</b><span>Sessioni</span></div><div class="stat"><b>${mins}</b><span>Minuti</span></div><div class="stat"><b>${wk}</b><span>Settimana</span></div></div>
+    <div style="margin-top:16px">${rows || '<div class="empty">Nessuna sessione ancora.<br>Completa il tuo primo allenamento e comparirà qui.</div>'}</div>`;
+}
+
+/* ---------- impostazioni e consigli ---------- */
+function modal(html) {
+  const layer = $('#layer');
+  layer.innerHTML = `<div class="scrim center" id="sc"><div class="modal">${html}</div></div>`;
+  $('#sc').addEventListener('click', ev => { if (ev.target.id === 'sc') layer.innerHTML = ''; });
+  return () => { layer.innerHTML = ''; };
+}
+function openSettings() {
+  const draw = () => `<h3>Impostazioni</h3>
+    <div class="tg"><span>Suoni del timer</span><button class="sw ${settings.sound ? 'on' : ''}" data-set="sound"></button></div>
+    <div class="tg"><span>Vibrazione</span><button class="sw ${settings.vibrate ? 'on' : ''}" data-set="vibrate"></button></div>
+    <div class="acts"><button class="btn sec" id="m-close">Chiudi</button></div>`;
+  const close = modal(draw());
+  const bind = () => {
+    $('#m-close').onclick = close;
+    $$('[data-set]').forEach(b => b.onclick = () => { settings[b.dataset.set] = !settings[b.dataset.set]; saveSettings(); $('.modal').innerHTML = draw(); bind(); unlockAudio(); beep(660, 80); });
+  };
+  bind();
+}
+function openInfo() {
+  const close = modal(`<h3>Consigli per iniziare</h3>
+    <p>Allenati 3 volte a settimana (lunedì, mercoledì, venerdì) e lascia un giorno di recupero tra una sessione e l'altra. Nei giorni liberi cammina o fai stretching leggero.</p>
+    <p style="margin-top:10px">Muoviti lentamente e con controllo. Un leggero affaticamento muscolare è normale, il dolore acuto no: se lo senti, fermati.</p>
+    <p style="margin-top:10px">Se hai problemi alla schiena, dolori persistenti o condizioni mediche, chiedi prima il parere di un medico o fisioterapista.</p>
+    <div class="acts"><button class="btn sec" id="m-close">Ho capito</button></div>`);
+  $('#m-close').onclick = close;
+}
+
+/* ---------- navigazione e eventi ---------- */
+function showTab(t) {
+  $$('.tab').forEach(b => b.classList.toggle('on', b.dataset.tab === t));
+  $$('.view').forEach(v => v.classList.toggle('on', v.id === 'v-' + t));
+  ({home: renderHome, ex: renderEx, cal: renderCal, hist: renderHist})[t]();
+  $('#v-' + t).scrollTop = 0;
+}
+function currentTab() { return ($('.tab.on') || {dataset: {tab: 'home'}}).dataset.tab; }
+
+document.addEventListener('click', ev => {
+  const t = ev.target.closest('button'); if (!t) return;
+  if (t.dataset.tab) return showTab(t.dataset.tab);
+  if (t.dataset.start) { unlockAudio(); return startWorkout(t.dataset.start); }
+  if (t.dataset.ex) return openExercise(t.dataset.ex);
+  if (t.dataset.day) { calSel = t.dataset.day; return renderCal(); }
+  if (t.id === 'cal-prev') { calMonth.setMonth(calMonth.getMonth() - 1); return renderCal(); }
+  if (t.id === 'cal-next') { calMonth.setMonth(calMonth.getMonth() + 1); return renderCal(); }
+  if (t.id === 'open-settings') return openSettings();
+  if (t.id === 'open-info') return openInfo();
+  if (t.dataset.del) {
+    const ts = +t.dataset.del;
+    const close = modal(`<h3>Eliminare la sessione?</h3><p>Verrà rimossa dallo storico e dal calendario.</p>
+      <div class="acts"><button class="btn pri" id="m-yes">Elimina</button><button class="btn sec" id="m-no">Annulla</button></div>`);
+    $('#m-no').onclick = close;
+    $('#m-yes').onclick = () => { sessionLog = sessionLog.filter(h => h.ts !== ts); saveHistory(); close(); renderHist(); };
+  }
+});
+
+/* un solo ciclo di animazione per tutto */
+let lastT = performance.now();
+function frame(now) {
+  const dt = Math.min(0.1, (now - lastT) / 1000); lastT = now;
+  figs.forEach(f => f.tick(dt));
+  if (typeof workoutTick === 'function') workoutTick(dt);
+  requestAnimationFrame(frame);
+}
+
+/* =========================================================
+   Schermata di allenamento: timer, pausa, avanti/indietro, recupero
+   ========================================================= */
+let W = null;
+const RING = 565.49;
+const $w = s => $(s, $('#workout'));
+
+function startWorkout(code) {
+  const steps = buildSteps(code);
+  W = {code, steps, i: 0, left: 0, paused: false, active: 0, total: stepsTotal(steps), fig: null, figEx: null, shown: -1, pushed: false};
+  $('#workout').innerHTML = `
+    <div class="w-top">
+      <button class="iconbtn" id="w-close" aria-label="Chiudi">✕</button>
+      <div class="info"><div class="label" id="w-wk"></div><div class="sub" id="w-cnt" style="font-size:12px;margin-top:3px"></div></div>
+      <div style="width:44px"></div>
+    </div>
+    <div class="bar"><i id="w-bar"></i></div>
+    <div class="w-main">
+      <div class="phase" id="w-phase"></div>
+      <div class="figbox" id="w-fig"></div>
+      <div class="w-name" id="w-name"></div>
+      <div class="ring" id="w-ring"><svg viewBox="0 0 200 200"><circle class="bg" cx="100" cy="100" r="90"/><circle class="fg" id="w-fg" cx="100" cy="100" r="90" stroke-dasharray="${RING}" stroke-dashoffset="0"/></svg><b id="w-time"></b></div>
+      <div class="tip" id="w-tip"></div>
+    </div>
+    <div class="ctrl">
+      <button class="btn sec" id="w-back">Indietro</button>
+      <button class="btn pri" id="w-pause">Pausa</button>
+      <button class="btn sec" id="w-next">Avanti</button>
+    </div>`;
+  $('#workout').classList.remove('hidden');
+  $('#w-close').onclick = askExit;
+  $('#w-back').onclick = goBack;
+  $('#w-next').onclick = goNext;
+  $('#w-pause').onclick = togglePause;
+  try { window.history.pushState({w: 1}, ''); W.pushed = true; } catch (e) {}
+  try { if (navigator.wakeLock) navigator.wakeLock.request('screen').then(l => { W && (W.lock = l); }).catch(() => {}); } catch (e) {}
+  enterStep(0);
+  beep(660, 90);
+}
+
+function enterStep(i) {
+  const s = W.steps[i]; W.i = i; W.left = s.dur; W.shown = -1;
+  const e = EX[s.ex], work = s.type === 'work';
+  $w('#w-wk').textContent = PLAN[W.code].name;
+  const works = W.steps.filter(x => x.type === 'work').length;
+  const doneWorks = W.steps.slice(0, i).filter(x => x.type === 'work').length;
+  $w('#w-cnt').textContent = 'Esercizio ' + Math.min(works, doneWorks + (work ? 1 : 1)) + ' di ' + works;
+  $w('#w-phase').textContent = work ? 'Giro ' + s.round + ' · Allenamento' : (s.type === 'prep' ? 'Preparati' : 'Recupero · Respira');
+  $w('#w-name').innerHTML = work ? e.name : '<span class="sub" style="display:block;font-size:12px;letter-spacing:.2em;text-transform:uppercase;margin-bottom:4px">Prossimo</span>' + e.name;
+  $w('#w-tip').textContent = work ? e.cue : e.steps[0];
+  $w('#w-ring').classList.toggle('rest', !work);
+  if (W.figEx !== s.ex) {
+    if (W.fig) W.fig.destroy();
+    W.fig = new Fig($w('#w-fig'), s.ex); W.figEx = s.ex;
+  }
+  W.fig.running = !W.paused;
+  updateDisplay();
+}
+
+function updateDisplay() {
+  const s = W.steps[W.i], whole = Math.ceil(W.left);
+  if (whole !== W.shown) { W.shown = whole; $w('#w-time').textContent = s.dur >= 60 || whole >= 60 ? mmss(W.left) : whole; }
+  $w('#w-fg').setAttribute('stroke-dashoffset', (RING * (1 - Math.max(0, W.left) / s.dur)).toFixed(1));
+  let done = 0; for (let k = 0; k < W.i; k++) done += W.steps[k].dur;
+  done += s.dur - W.left;
+  $w('#w-bar').style.width = Math.min(100, done / W.total * 100).toFixed(2) + '%';
+}
+
+function workoutTick(dt) {
+  if (!W || W.paused || W.finished) return;
+  const before = Math.ceil(W.left);
+  W.left -= dt; W.active += dt;
+  const after = Math.ceil(W.left);
+  if (after !== before && after >= 1 && after <= 3) { beep(720, 90); buzz(30); }
+  if (W.left <= 0) { beep(1040, 260); buzz([120, 60, 120]); return goNext(true); }
+  updateDisplay();
+}
+
+function goNext(auto) {
+  if (!W) return;
+  if (W.i >= W.steps.length - 1) return finish(true);
+  enterStep(W.i + 1);
+}
+function goBack() {
+  if (!W) return;
+  const s = W.steps[W.i];
+  if (s.dur - W.left > 3 || W.i === 0) enterStep(W.i); else enterStep(W.i - 1);
+}
+function togglePause() {
+  if (!W) return;
+  W.paused = !W.paused;
+  const b = $w('#w-pause'); b.textContent = W.paused ? 'Riprendi' : 'Pausa';
+  if (W.fig) W.fig.running = !W.paused;
+  const s = W.steps[W.i];
+  $w('#w-phase').textContent = W.paused ? 'In pausa' : (s.type === 'work' ? 'Giro ' + s.round + ' · Allenamento' : (s.type === 'prep' ? 'Preparati' : 'Recupero · Respira'));
+}
+
+function askExit() {
+  if (!W || W.finished) return closeWorkout();
+  if (!W.paused) togglePause();
+  const canSave = W.active >= 30;
+  $('#layer').innerHTML = `<div class="scrim center" id="sc"><div class="modal"><h3>Vuoi fermarti?</h3>
+    <p>${canSave ? 'Puoi salvare la parte che hai fatto oppure uscire senza salvare.' : 'Hai appena iniziato: uscendo non verrà salvato nulla.'}</p>
+    <div class="acts"><button class="btn pri" id="x-go">Continua</button>
+    ${canSave ? '<button class="btn sec" id="x-save">Termina e salva</button>' : ''}
+    <button class="btn sec" id="x-out">Esci senza salvare</button></div></div></div>`;
+  const hide = () => { $('#layer').innerHTML = ''; };
+  $('#x-go').onclick = () => { hide(); if (W && !W.pushed) { try { window.history.pushState({w: 1}, ''); W.pushed = true; } catch (e) {} } if (W.paused) togglePause(); };
+  if (canSave) $('#x-save').onclick = () => { hide(); finish(false); };
+  $('#x-out').onclick = () => { hide(); closeWorkout(); };
+}
+window.addEventListener('popstate', () => { if (W) { W.pushed = false; if (!W.finished) askExit(); } });
+
+function finish(full) {
+  if (!W) return;
+  W.finished = true;
+  full = full && W.active >= W.total * 0.5;   // se salti quasi tutto, vale come parziale
+  const secs = Math.round(W.active);
+  sessionLog.push({ts: Date.now(), date: todayStr(), code: W.code, secs, full});
+  saveHistory();
+  const nx = nextWorkout();
+  const works = W.steps.filter(x => x.type === 'work').length;
+  const nextTxt = nx.offset === 0 ? 'Prossimo: ' + PLAN[nx.code].name : WD_FULL[nx.date.getDay()] + ': ' + PLAN[nx.code].name;
+  if (W.fig) { W.fig.destroy(); W.fig = null; }
+  beep(660, 120); setTimeout(() => beep(880, 120), 160); setTimeout(() => beep(1100, 240), 320); buzz([100, 60, 100, 60, 260]);
+  $('#workout').innerHTML = `
+    <div class="w-main" style="gap:22px">
+      <div class="ok">${ICON_OK}</div>
+      <div class="done-big">${full ? 'Allenamento<br>completato' : 'Sessione<br>salvata'}</div>
+      <p class="sub" style="text-align:center">${full ? 'Ottimo lavoro. Ora lascia riposare la schiena.' : 'Anche una parte conta. La prossima volta vai fino in fondo.'}</p>
+      <div class="stats" style="grid-template-columns:repeat(2,1fr)">
+        <div class="stat"><b>${Math.max(1, Math.round(secs / 60))}</b><span>Minuti</span></div>
+        <div class="stat"><b>${full ? works : Math.min(works, Math.floor(W.i / 2) + 1)}</b><span>Esercizi</span></div>
+      </div>
+      <div class="card" style="text-align:center"><div class="label">Recupero</div><p class="sub" style="margin-top:6px">${nextTxt}. Nei giorni liberi: camminata leggera e un po' d'acqua.</p></div>
+    </div>
+    <button class="btn pri" id="w-end">Fine</button>`;
+  $('#w-end').onclick = closeWorkout;
+}
+
+function closeWorkout() {
+  if (!W) return;
+  const pushed = W.pushed;
+  if (W.fig) W.fig.destroy();
+  try { W.lock && W.lock.release(); } catch (e) {}
+  W = null;
+  $('#workout').classList.add('hidden'); $('#workout').innerHTML = '';
+  $('#layer').innerHTML = '';
+  if (pushed) { try { window.history.back(); } catch (e) {} }
+  showTab(currentTab());
+}
+
+/* ---- avvio ---- */
+showTab('home');
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
